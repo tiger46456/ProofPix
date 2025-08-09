@@ -1,0 +1,3 @@
+# To build, the Dockerfile must install the FAISS C++ library and its dependencies.
+# For a Debian-based image, this would likely involve:
+# apt-get update && apt-get install -y libopenblas-dev libfaiss-dev

@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>🔐 ProofPix Firebase Token Tester</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; background: #f8f9fa; }
+        .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .header { text-align: center; margin-bottom: 30px; }
+        .section { margin: 20px 0; padding: 20px; background: #f8f9fa; border-radius: 8px; }
+        input, button { padding: 12px; margin: 8px 0; width: 100%; box-sizing: border-box; border: 1px solid #ddd; border-radius: 6px; }
+        button { background: #4285f4; color: white; border: none; cursor: pointer; font-weight: bold; }
+        button:hover { background: #3367d6; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        .token-display { background: #e8f5e8; padding: 15px; border-radius: 6px; margin: 10px 0; word-break: break-all; font-family: monospace; font-size: 12px; }
+        .api-result { background: #f0f8ff; padding: 15px; border-radius: 6px; margin: 10px 0; }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .info { color: #17a2b8; }
+        .warning { color: #ffc107; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔐 ProofPix Firebase Authentication Tester</h1>
+            <p>Test your Firebase JWT authentication with your Go API</p>
+        </div>
+
+        <div class="section">
+            <h3>📧 Step 1: Sign In to Firebase</h3>
+            <input type="email" id="email" placeholder="Email" value="imad@rafya.store">
+            <input type="password" id="password" placeholder="Password">
+            <button id="signInBtn" onclick="signInUser()">🔑 Sign In & Get Token</button>
+            <div id="signInResult"></div>
+        </div>
+
+        <div class="section">
+            <h3>🎟️ Step 2: JWT Token</h3>
+            <div id="tokenDisplay" style="display: none;">
+                <strong>Your JWT Token:</strong>
+                <div class="token-display" id="tokenValue"></div>
+                <button onclick="copyToken()">📋 Copy Token</button>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>🧪 Step 3: Test API Endpoints</h3>
+            <button onclick="testPublicEndpoint()">🌐 Test Public Endpoint</button>
+            <button onclick="testProtectedEndpoint()" id="testProtectedBtn" disabled>🔒 Test Protected Endpoint</button>
+            <button onclick="testProfileEndpoint()" id="testProfileBtn" disabled>👤 Test Profile Endpoint</button>
+            <button onclick="testOptionalEndpoint()">🔄 Test Optional Auth Endpoint</button>
+            <div id="apiResults"></div>
+        </div>
+
+        <div class="section">
+            <h3>📋 Instructions</h3>
+            <ol>
+                <li>Enter your Firebase user credentials (imad@rafya.store)</li>
+                <li>Click "Sign In & Get Token" to authenticate and get your JWT</li>
+                <li>Use the buttons to test different API endpoints</li>
+                <li>Copy the token to use with curl or other tools</li>
+            </ol>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+
+        // Your Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBDXrEZjMdDDdGbHpHRs0I0xxO1K3XGNTA",
+            authDomain: "make-connection-464709.firebaseapp.com",
+            projectId: "make-connection-464709",
+            storageBucket: "make-connection-464709.firebasestorage.app",
+            messagingSenderId: "992932754864",
+            appId: "1:992932754864:web:ba25cd7c803a1fe7929275",
+            measurementId: "G-8LG9ZBJWC5"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        let currentToken = null;
+
+        // Make functions global
+        window.signInUser = async function() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const resultDiv = document.getElementById('signInResult');
+            const signInBtn = document.getElementById('signInBtn');
+            
+            if (!email || !password) {
+                resultDiv.innerHTML = '<p class="error">❌ Please enter both email and password</p>';
+                return;
+            }
+
+            try {
+                signInBtn.disabled = true;
+                signInBtn.textContent = '🔄 Signing in...';
+                resultDiv.innerHTML = '<p class="info">🔄 Authenticating with Firebase...</p>';
+                
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+                const token = await user.getIdToken();
+                
+                currentToken = token;
+                
+                resultDiv.innerHTML = `
+                    <div class="success">
+                        <p>✅ Successfully signed in!</p>
+                        <p><strong>Email:</strong> ${user.email}</p>
+                        <p><strong>UID:</strong> ${user.uid}</p>
+                        <p><strong>Email Verified:</strong> ${user.emailVerified}</p>
+                    </div>
+                `;
+                
+                // Show token
+                document.getElementById('tokenDisplay').style.display = 'block';
+                document.getElementById('tokenValue').textContent = token;
+                
+                // Enable protected endpoint buttons
+                document.getElementById('testProtectedBtn').disabled = false;
+                document.getElementById('testProfileBtn').disabled = false;
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<p class="error">❌ Sign-in failed: ${error.message}</p>`;
+            } finally {
+                signInBtn.disabled = false;
+                signInBtn.textContent = '🔑 Sign In & Get Token';
+            }
+        };
+
+        window.copyToken = function() {
+            const tokenValue = document.getElementById('tokenValue').textContent;
+            navigator.clipboard.writeText(tokenValue).then(() => {
+                alert('✅ Token copied to clipboard!');
+            });
+        };
+
+        window.testPublicEndpoint = async function() {
+            await testEndpoint('http://localhost:8080/api/v1/public', false);
+        };
+
+        window.testProtectedEndpoint = async function() {
+            await testEndpoint('http://localhost:8080/api/v1/protected', true);
+        };
+
+        window.testProfileEndpoint = async function() {
+            await testEndpoint('http://localhost:8080/api/v1/profile', true);
+        };
+
+        window.testOptionalEndpoint = async function() {
+            await testEndpoint('http://localhost:8080/api/v1/optional', currentToken ? true : false);
+        };
+
+        async function testEndpoint(url, useAuth) {
+            const resultsDiv = document.getElementById('apiResults');
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            
+            if (useAuth && currentToken) {
+                headers['Authorization'] = `Bearer ${currentToken}`;
+            }
+
+            try {
+                resultsDiv.innerHTML += `<div class="info">🔄 Testing: ${url}</div>`;
+                
+                const response = await fetch(url, { headers });
+                const data = await response.json();
+                
+                const statusClass = response.ok ? 'success' : 'error';
+                const statusIcon = response.ok ? '✅' : '❌';
+                
+                resultsDiv.innerHTML += `
+                    <div class="api-result">
+                        <div class="${statusClass}">
+                            <strong>${statusIcon} ${url}</strong> - Status: ${response.status}
+                        </div>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    </div>
+                `;
+                
+            } catch (error) {
+                resultsDiv.innerHTML += `
+                    <div class="api-result">
+                        <div class="error">
+                            <strong>❌ ${url}</strong> - Error: ${error.message}
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // Auto-detect if user is already signed in
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                console.log('User already signed in:', user.email);
+                // Automatically get token if user is already signed in
+                currentToken = await user.getIdToken();
+                document.getElementById('tokenDisplay').style.display = 'block';
+                document.getElementById('tokenValue').textContent = currentToken;
+                document.getElementById('testProtectedBtn').disabled = false;
+                document.getElementById('testProfileBtn').disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

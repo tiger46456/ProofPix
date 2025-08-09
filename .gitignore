@@ -1,0 +1,14 @@
+/bin
+
+# Terraform - local working directory and state files
+**/.terraform/*
+terraform.tfstate
+terraform.tfstate.backup
+*.tfstate
+*.tfstate.*
+
+# Ignore Terraform provider plugins and local state
+infrastructure/.terraform/
+*.tfstate
+*.tfstate.backup
+infrastructure/*.json

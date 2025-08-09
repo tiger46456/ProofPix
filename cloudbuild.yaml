@@ -1,0 +1,57 @@
+steps:
+  # 1. Build the API container image
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'build-api'
+    args:
+      - 'build'
+      - '-f'
+      - './cmd/api/Dockerfile'
+      - '-t'
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/proofpix/api:$BUILD_ID'
+      - '.'
+    waitFor: ['-']
+
+  # 2. Build the fingerprint-worker container image
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'build-worker'
+    args:
+      - 'build'
+      - '-f'
+      - './cmd/fingerprint-worker/Dockerfile'
+      - '-t'
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/proofpix/fingerprint-worker:$BUILD_ID'
+      - '.'
+    waitFor: ['-']
+
+  # 3. Push both images to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/proofpix/api:$BUILD_ID']
+    waitFor: ['build-api']
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/proofpix/fingerprint-worker:$BUILD_ID']
+    waitFor: ['build-worker']
+
+  # 4. Initialize Terraform
+  - name: 'hashicorp/terraform:1.5.7'
+    id: 'terraform-init'
+    entrypoint: 'terraform'
+    dir: 'infrastructure'
+    args: ['init']
+
+  # 5. Apply Terraform configuration
+  - name: 'hashicorp/terraform:1.5.7'
+    id: 'terraform-apply'
+    entrypoint: 'terraform'
+    dir: 'infrastructure'
+    args:
+      - 'apply'
+      - '-auto-approve'
+      - '-var=project_id=${PROJECT_ID}'
+      - '-var=api_image=us-central1-docker.pkg.dev/$PROJECT_ID/proofpix/api:$BUILD_ID'
+      - '-var=worker_image=us-central1-docker.pkg.dev/$PROJECT_ID/proofpix/fingerprint-worker:$BUILD_ID'
+    waitFor: ['terraform-init']
+
+# Specify the images to be stored by Cloud Build
+images:
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/proofpix/api:$BUILD_ID'
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/proofpix/fingerprint-worker:$BUILD_ID'

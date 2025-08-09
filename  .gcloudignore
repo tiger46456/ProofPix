@@ -1,0 +1,40 @@
+# Exclude local binaries and build artifacts
+/bin/
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Node or web artifacts (if any)
+node_modules/
+dist/
+.build/
+.tmp/
+
+# Test assets and large local data
+cmd/test-suite/test-images/
+*.tgz
+*.zip
+*.tar
+*.tar.gz
+
+# Git and editor metadata
+.git/
+.gitignore
+.vscode/
+.idea/
+.DS_Store
+
+# Terraform local state (remote state stored elsewhere)
+**/.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+
+# Credentials (ensure not committed)
+*.json
+!infrastructure/*.json
+
+# Logs and coverage
+**/*.log
+coverage

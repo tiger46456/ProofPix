@@ -1,0 +1,33 @@
+name: Build and Deploy to Cloud Run
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Authenticate to Google Cloud
+      id: auth
+      uses: 'google-github-actions/auth@v1'
+      with:
+        workload_identity_provider: 'projects/992932754864/locations/global/workloadIdentityPools/github-pool/providers/github-provider'
+        service_account: 'github-actions-sa@make-connection-464709.iam.gserviceaccount.com'
+
+    - name: Set up Cloud SDK
+      uses: 'google-github-actions/setup-gcloud@v1'
+
+    - name: Submit build to Cloud Build
+      run: |-
+        gcloud builds submit . \
+          --config=cloudbuild.yaml
