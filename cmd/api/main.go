@@ -112,7 +112,8 @@ func main() {
 	// Protected routes (authentication required)
 	mux.Handle("/api/v1/protected", auth.VerifyFirebaseJWT(http.HandlerFunc(handleProtected)))
 	mux.Handle("/api/v1/profile", auth.VerifyFirebaseJWT(http.HandlerFunc(handleProfile)))
-	mux.Handle("/api/v1/assets", auth.VerifyFirebaseJWT(http.HandlerFunc(handleAssets)))
+    mux.Handle("/api/v1/assets", auth.VerifyFirebaseJWT(http.HandlerFunc(handleAssets)))
+    mux.Handle("/api/v1/assets/", auth.VerifyFirebaseJWT(http.HandlerFunc(handleAssets)))
 
 	// Optional authentication routes (works with or without auth)
 	mux.Handle("/api/v1/optional", auth.OptionalFirebaseJWT(http.HandlerFunc(handleOptional)))
